@@ -1,7 +1,8 @@
-# Node.js CRUD example with SQL Server (MSSQL) - Express Rest APIs and Sequelize
+# Node.js CRUD example with SQL Server (MSSQL) - Express Rest APIs and Sequelize(ORM)
 
+## How to run the SQL Server Docker container
 
-
+## How to create the Database and the Table
 
 We run this SQL query for creating the database **bezkoder_db** and a new a table **Tutorials**
 

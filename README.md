@@ -1,51 +1,552 @@
 # Node.js CRUD example with SQL Server (MSSQL) - Express Rest APIs and Sequelize
 
-For more detail, please visit:
-> [Node.js CRUD example with SQL Server (MSSQL)](https://www.bezkoder.com/node-js-sql-server-crud/)
 
-Front-end that works well with this Back-end
-> [Axios Client](https://www.bezkoder.com/axios-request/) / [Javascript Fetch API Client](https://www.bezkoder.com/javascript-fetch/)
 
-> [Angular 8 Client](https://www.bezkoder.com/angular-crud-app/) / [Angular 10 Client](https://www.bezkoder.com/angular-10-crud-app/) / [Angular 11 Client](https://www.bezkoder.com/angular-11-crud-app/) / [Angular 12 Client](https://www.bezkoder.com/angular-12-crud-app/) / [Angular 13 Client](https://www.bezkoder.com/angular-13-crud-example/) / [Angular 14 Client](https://www.bezkoder.com/angular-14-crud-example/) / [Angular 15 Client](https://www.bezkoder.com/angular-15-crud-example/)
 
-> [Vue 2 Client](https://www.bezkoder.com/vue-js-crud-app/) / [Vue 3 Client](https://www.bezkoder.com/vue-3-crud/) / [Vuetify Client](https://www.bezkoder.com/vuetify-data-table-example/)
+We run this SQL query for creating the database **bezkoder_db** and a new a table **Tutorials**
 
-> [React Client](https://www.bezkoder.com/react-crud-web-api/) / [React Redux Client](https://www.bezkoder.com/react-redux-crud-example/)
+```SQL
+CREATE DATABASE bezkoder_db
+GO
 
-More Practice:
-> [Server side Pagination in Node.js with Sequelize](https://www.bezkoder.com/node-js-sequelize-pagination-mysql/)
-
-> [Node.js Express File Upload Rest API example](https://www.bezkoder.com/node-js-express-file-upload/)
-
-> [Node.js Express File Upload with Google Cloud Storage example](https://www.bezkoder.com/google-cloud-storage-nodejs-upload-file/)
-
-> [Node.js: Upload CSV file data into Database with Express](https://www.bezkoder.com/node-js-upload-csv-file-database/)
-
-> [Node.js: Upload Excel file data into Database with Express](https://www.bezkoder.com/node-js-upload-excel-file-database/)
-
-> [Deploying/Hosting Node.js app on Heroku with MySQL database](https://www.bezkoder.com/deploy-node-js-app-heroku-cleardb-mysql/)
-
-Security:
-> [Node.js Express: JWT example | Token Based Authentication & Authorization](https://www.bezkoder.com/node-js-jwt-authentication-mysql/)
-
-Associations:
-> [Sequelize Associations: One-to-Many Relationship example](https://www.bezkoder.com/sequelize-associate-one-to-many/)
-
-> [Sequelize Associations: Many-to-Many Relationship example](https://www.bezkoder.com/sequelize-associate-many-to-many/)
-
-Integration (run back-end & front-end on same server/port)
-> [Integrate React with Node.js Restful Services](https://www.bezkoder.com/integrate-react-express-same-server-port/)
-
-> [Integrate Angular with Node.js Restful Services](https://www.bezkoder.com/integrate-angular-10-node-js/)
-
-> [Integrate Vue with Node.js Restful Services](https://www.bezkoder.com/serve-vue-app-express/)
-
-## Project setup
-```
-npm install
+CREATE TABLE Tutorials (
+    id INT IDENTITY PRIMARY KEY,
+    title NVARCHAR(255),
+    description NVARCHAR(255),
+    published BIT,
+    createdAt DATETIME,
+    updatedAt DATETIME
+);
 ```
 
-### Run
+This is the project folders and files structure
+
+![image](https://github.com/luiscoco/node-js-mssql-crud-example-master-advance-sample-/assets/32194879/5ac0a698-38a8-4c26-ae21-98fc83d164df)
+
+### Source code explained
+
+**server.js**
+
+```javascript
+const express = require("express");
+// const bodyParser = require("body-parser"); /* deprecated */
+const cors = require("cors");
+
+const swaggerJSDoc = require('swagger-jsdoc');
+
+const swaggerUi = require('swagger-ui-express');
+
+const app = express();
+
+const port = process.env.PORT || 8080; 
+
+var corsOptions = {
+  origin: "http://localhost:8081"
+};
+
+app.use(cors(corsOptions));
+
+// parse requests of content-type - application/json
+app.use(express.json());  /* bodyParser.json() is deprecated */
+
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));   /* bodyParser.urlencoded() is deprecated */
+
+// Swagger configuration
+// (Same as your original setup, no changes needed here)
+
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Tutorials API",
+      version: "1.0.0",
+      description: "A simple API to manage tutorials",
+    },
+    servers: [
+      {
+        url: `http://localhost:${port}`,
+        description: "Development server",
+      },
+    ],
+    components: {
+      schemas: {
+        Tutorial: {
+          type: "object",
+          required: ['title', 'description', 'published'], // assuming these fields are required
+          properties: {
+            id: {
+              type: "integer",
+              format: "int32",
+              description: "Unique identifier for the tutorial",
+            },
+            title: {
+              type: "string",
+              description: "Title of the tutorial",
+            },
+            description: {
+              type: "string",
+              description: "Description of the tutorial",
+            },
+            published: {
+              type: "boolean",
+              description: "Published status of the tutorial",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              description: "Date and time when the tutorial was created",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              description: "Date and time when the tutorial was last updated",
+            },
+          },
+        },
+      },
+    },
+  },
+  apis: ['./app/routes/*.routes.js', './app/controllers/*.controller.js'], // Patterns to find Swagger annotations
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+//Database configuration and models
+const db = require("./app/models");
+
+db.sequelize.sync();
+// // drop the table if it already exists
+// db.sequelize.sync({ force: true }).then(() => {
+//   console.log("Drop and re-sync db.");
+// });
+
+// simple route
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to bezkoder application." });
+});
+
+require("./app/routes/turorial.routes")(app);
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}.`);
+});
 ```
-node server.js
+
+**db.config.js**
+
+```javascript
+module.exports = {
+  HOST: "localhost",
+  PORT: "1433",
+  USER: "sa",
+  PASSWORD: "Luiscoco123456",
+  DB: "bezkoder_db",
+  dialect: "mssql",
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
+};
 ```
+
+**tutorial.controller.js**
+
+```javascript
+const db = require("../models");
+const Tutorial = db.tutorials;
+const Op = db.Sequelize.Op;
+
+/**
+ * @swagger
+ * /api/tutorials:
+ *   post:
+ *     summary: Create a new tutorial
+ *     description: Add a tutorial to the database.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               published:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Returns the created tutorial.
+ *       400:
+ *         description: Content can not be empty.
+ *       500:
+ *         description: Server error.
+ */
+exports.create = (req, res) => {
+  // Validate request
+  if (!req.body.title) {
+    res.status(400).send({
+      message: "Content can not be empty!"
+    });
+    return;
+  }
+
+  // Create a Tutorial
+  const tutorial = {
+    title: req.body.title,
+    description: req.body.description,
+    published: req.body.published ? req.body.published : false
+  };
+
+  // Save Tutorial in the database
+  Tutorial.create(tutorial)
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while creating the Tutorial."
+      });
+    });
+};
+
+/**
+ * @swagger
+ * /api/tutorials:
+ *   get:
+ *     summary: Retrieve all tutorials
+ *     description: Get a list of all tutorials, optionally filtered by title.
+ *     parameters:
+ *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Title to filter by.
+ *     responses:
+ *       200:
+ *         description: A list of tutorials.
+ *       500:
+ *         description: Server error.
+ */
+exports.findAll = (req, res) => {
+  const title = req.query.title;
+  var condition = title ? { title: { [Op.like]: `%${title}%` } } : null;
+
+  Tutorial.findAll({ where: condition })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving tutorials."
+      });
+    });
+};
+
+/**
+ * @swagger
+ * /api/tutorials/{id}:
+ *   get:
+ *     summary: Retrieve a single tutorial by ID
+ *     description: Get a tutorial by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tutorial ID.
+ *     responses:
+ *       200:
+ *         description: A tutorial object.
+ *       500:
+ *         description: Error retrieving tutorial.
+ */
+exports.findOne = (req, res) => {
+  const id = req.params.id;
+
+  Tutorial.findByPk(id)
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message: "Error retrieving Tutorial with id=" + id
+      });
+    });
+};
+
+/**
+ * @swagger
+ * /api/tutorials/{id}:
+ *   put:
+ *     summary: Update a tutorial
+ *     description: Update a tutorial by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tutorial ID.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               published:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Tutorial was updated successfully.
+ *       400:
+ *         description: Request body is empty.
+ *       500:
+ *         description: Error updating tutorial.
+ */
+
+exports.update = (req, res) => {
+  const id = req.params.id;
+
+  Tutorial.update(req.body, {
+    where: { id: id }
+  })
+    .then(num => {
+      if (num == 1) {
+        res.send({
+          message: "Tutorial was updated successfully."
+        });
+      } else {
+        res.send({
+          message: `Cannot update Tutorial with id=${id}. Maybe Tutorial was not found or req.body is empty!`
+        });
+      }
+    })
+    .catch(err => {
+      res.status(500).send({
+        message: "Error updating Tutorial with id=" + id
+      });
+    });
+};
+
+/**
+ * @swagger
+ * /api/tutorials/{id}:
+ *   delete:
+ *     summary: Delete a tutorial
+ *     description: Delete a tutorial by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tutorial ID.
+ *     responses:
+ *       200:
+ *         description: Tutorial was deleted successfully.
+ *       404:
+ *         description: Tutorial not found.
+ *       500:
+ *         description: Error deleting tutorial.
+ */
+exports.delete = (req, res) => {
+  const id = req.params.id;
+
+  Tutorial.destroy({
+    where: { id: id }
+  })
+    .then(num => {
+      if (num == 1) {
+        res.send({
+          message: "Tutorial was deleted successfully!"
+        });
+      } else {
+        res.send({
+          message: `Cannot delete Tutorial with id=${id}. Maybe Tutorial was not found!`
+        });
+      }
+    })
+    .catch(err => {
+      res.status(500).send({
+        message: "Could not delete Tutorial with id=" + id
+      });
+    });
+};
+
+/**
+ * @swagger
+ * /api/tutorials:
+ *   delete:
+ *     summary: Delete all tutorials
+ *     tags: [Tutorials]
+ *     responses:
+ *       200:
+ *         description: All tutorials were deleted successfully.
+ *       500:
+ *         description: Some error occurred while removing all tutorials.
+ */
+exports.deleteAll = (req, res) => {
+  Tutorial.destroy({
+    where: {},
+    truncate: false
+  })
+    .then(nums => {
+      res.send({ message: `${nums} Tutorials were deleted successfully!` });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while removing all tutorials."
+      });
+    });
+};
+
+/**
+ * @swagger
+ * /api/tutorials/published:
+ *   get:
+ *     summary: Retrieve all published tutorials
+ *     tags: [Tutorials]
+ *     responses:
+ *       200:
+ *         description: A list of published tutorials.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Tutorial'
+ *       500:
+ *         description: Some error occurred while retrieving tutorials.
+ */
+exports.findAllPublished = (req, res) => {
+  Tutorial.findAll({ where: { published: true } })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving tutorials."
+      });
+    });
+};
+```
+
+**index.js**
+
+```javascript
+const dbConfig = require("../config/db.config.js");
+
+const Sequelize = require("sequelize");
+const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
+  host: dbConfig.HOST,
+  port: dbConfig.PORT,
+  dialect: dbConfig.dialect,
+  pool: {
+    max: dbConfig.pool.max,
+    min: dbConfig.pool.min,
+    acquire: dbConfig.pool.acquire,
+    idle: dbConfig.pool.idle,
+  },
+  logging: console.log,
+});
+
+const db = {};
+
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+
+db.tutorials = require("./tutorial.model.js")(sequelize, Sequelize);
+
+module.exports = db;
+```
+
+**tutorial.model.js**
+
+```javascript
+module.exports = (sequelize, Sequelize) => {
+  const Tutorial = sequelize.define("tutorial", {
+    id: {
+      type: Sequelize.INTEGER,
+      autoIncrement: true,
+      primaryKey: true
+    },
+    title: {
+      type: Sequelize.STRING
+    },
+    description: {
+      type: Sequelize.STRING
+    },
+    published: {
+      type: Sequelize.BOOLEAN
+    },
+    createdAt: {
+      type: Sequelize.DATE,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+    },
+    updatedAt: {
+      type: Sequelize.DATE,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+    }
+  }, {
+    // If you want Sequelize to automatically update the timestamps
+    // you don't need to pass anything here. However, if you are going
+    // to update them manually, you should set `timestamps: false`
+    // timestamps: false
+  });
+
+  return Tutorial;
+};
+```
+
+**tutorial.routes.js**
+
+```javascript
+module.exports = app => {
+  const tutorials = require("../controllers/tutorial.controller.js");
+
+  var router = require("express").Router();
+
+  // Create a new Tutorial
+  router.post("/", tutorials.create);
+
+  // Retrieve all Tutorials
+  router.get("/", tutorials.findAll);
+
+  // Retrieve all published Tutorials
+  router.get("/published", tutorials.findAllPublished);
+
+  // Retrieve a single Tutorial with id
+  router.get("/:id", tutorials.findOne);
+
+  // Update a Tutorial with id
+  router.put("/:id", tutorials.update);
+
+  // Delete a Tutorial with id
+  router.delete("/:id", tutorials.delete);
+
+  // Delete all Tutorials
+  router.delete("/", tutorials.deleteAll);
+
+  app.use('/api/tutorials', router);
+};
+```
+

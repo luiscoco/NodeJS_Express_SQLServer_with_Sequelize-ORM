@@ -602,19 +602,19 @@ Then we run the application
 node server.js
 ```
 
-We access the Swagger OpenAPI docs: http://localhost:8080/api-docs/#/
+We access the Swagger OpenAPI docs: **http://localhost:8080/api-docs/#/**
 
 ![image](https://github.com/luiscoco/NodeJS_Express_SQLServer_with_Sequelize-ORM/assets/32194879/6a970751-c665-4113-82ac-fbd1377abb72)
 
-We send a POST request for creating a new item in the database
+We send a **POST** request for creating a new item in the database
 
 ![image](https://github.com/luiscoco/NodeJS_Express_SQLServer_with_Sequelize-ORM/assets/32194879/b1c2416f-8135-46a1-9463-cedb0693b667)
 
-We verify the new entry sending a GET request
+We verify the new entry sending a **GET** request
 
 ![image](https://github.com/luiscoco/NodeJS_Express_SQLServer_with_Sequelize-ORM/assets/32194879/71ae455c-c600-47f8-a51d-fe2585e8ed1e)
 
-We also verify in SQL Sever Management Studio SSMS
+We also verify in SQL Sever Management Studio **SSMS**
 
 ![image](https://github.com/luiscoco/NodeJS_Express_SQLServer_with_Sequelize-ORM/assets/32194879/736904e0-709f-4150-b606-85e1e8bfd5e4)
 

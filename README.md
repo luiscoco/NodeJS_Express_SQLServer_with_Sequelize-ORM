@@ -19,11 +19,48 @@ CREATE TABLE Tutorials (
 );
 ```
 
+## Project folders and files structure
+
 This is the project folders and files structure
 
 ![image](https://github.com/luiscoco/node-js-mssql-crud-example-master-advance-sample-/assets/32194879/5ac0a698-38a8-4c26-ae21-98fc83d164df)
 
-### Source code explained
+## Project dependencies
+
+**package.json**
+
+```json
+{
+  "name": "node-js-crud-sql-server",
+  "version": "1.0.0",
+  "description": "Node.js CRUD example with SQL Server",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "node js",
+    "sql server",
+    "mssql",
+    "crud",
+    "express",
+    "sequelize",
+    "rest api"
+  ],
+  "author": "bezkoder",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "sequelize": "^6.28.0",
+    "tedious": "^15.1.2",
+    "swagger-jsdoc": "^6.0.0",
+    "swagger-ui-express": "^4.1.6"
+  }
+}
+```
+
+## Source code explained
 
 **server.js**
 
